@@ -7,11 +7,17 @@
  * Check MIT-LICENSE.txt
  */
  /*
- * @class Ext.ux.GoogleAnalytics
+ * @coauthor Kyle Paul
+ * @class  Ext.ux.GoogleAnalytics
  * @extend Ext.app.Controller
- * 
  * Enables Google Analytics integration for Ext JS 4 MVC architecture.
  * 
+ * Adapted from the Google Analytics library made by Alun Huw Jones and
+ * updated for use with Google Universal Analytics and 
+ * added ability to track virtual pageviews
+ * http://github.com/ahj/Ext.ux.Analytics
+ * 
+ * @example
  *      Ext.application({
  *          name: 'MyApp',
  *          ...
@@ -22,9 +28,8 @@
  *              trackingCode: 'your tracking code'
  *          }
  *      });
- * 
- * @docauthor Alun Huw Jones
  */
+ 
 Ext.define('Ext.ux.GoogleAnalytics', {
     singleton: true,
     alternateClassName: 'Ext.GoogleAnalytics',
@@ -51,13 +56,13 @@ Ext.define('Ext.ux.GoogleAnalytics', {
     init: function(app) {
         var me = this;
         
-        if (!app || !app.GoogleAnalytics) {
+        if(!app || !app.GoogleAnalytics) {
             return;
         }
         
         me.processConfig(app);
-            
-        if (me.ready || !me.configured) {
+        
+        if(me.ready || !me.configured) {
             return;
         }
         me.ready = true;
@@ -69,109 +74,95 @@ Ext.define('Ext.ux.GoogleAnalytics', {
              * @param {String} category
              * @param {String} action
              */
-            'ga_track_event' 
+            'ga_track_event',
+            /**
+             * @event ga_track_pageview
+             * Fires when a pageview is tracked
+             * @param {String} pagepath
+             */
+            'ga_track_pageview'
         );
         
         Ext.onReady(function() {
-       	    // Ensure that the globally-scoped queue variable is defined
-            var _q = _gaq || [],
-                url = (document.location.protocol === 'https:')
-                    ? https://ssl.google-analytics.com/ga.js
-                    : http://www.google-analytics.com/ga.js;
-
-            _q.push(['_setAccount', me.trackingCode]);
-            _q.push(['trackPageview']);
-
-       	    me._gas(url);
+            // Ensure that the globally-scoped queue variable is defined
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            
+            ga('create', me.trackingCode, 'auto');
+            ga('send', 'pageview');
         });
     },
-
+    
     /**
      * Validate configuration.
      * @private
      */
     processConfig: function(app) {
         var me = this,
-            config = app.GoogleAnalytics,
-            events = config.events || [];
+            config = app.GoogleAnalytics;
         
-        if (!config.trackingCode) {
-    	    Ext.log.error('ga: tracking code is missing from config');
+        if(!config.trackingCode) {
+            Ext.log.error('ga: tracking code is missing from config');
             return false;
         }
         
         me.trackingCode = config.trackingCode;
-
         me.configured = true;
     },
-
-    /**
-     * Method used to load in to the current page the Google Analytics
-     * JavaScript code needed to support reading the _gmq queue and 
-     * pushing items found there to the Google Analytics servers
-     * using Ajax calls.
-     *
-     * @param {String} url  The url of a JavaScript file to be loaded
-     */
-    _gas: function(url) {
-        setTimeout(function() {
-    	    var d = document,
-    	        f = d.getElementsByTagName('script')[0],
-                s = d.createElement('script');
-    	    
-    	    s.type = 'text/javascript';
-    	    s.async = true;
-    	    s.src = url;
-    	    f.parentNode.insertBefore(s, f);
-    	}, 1);
-    },
-
+    
     /**
      * Issues a track event to the Google Analytics server.
      *
-     * @param {String} category  The name you supply for the group of objects you want to track.
-     * @param {String} action  A string that is uniquely paired with each category and commonly used
-     *                         to define the type of user interaction for the web object.
-     * @param {String} label   An optional string to provide additional dimensions to the event data.
-     * @param {Number} value   An integer that you can use to provide additional dimensions to the event data.
-     * @param {Boolean) noninteraction  A boolean that whe set to true, indicates that the event hit
-     *                                  will not be used in bounce-rate calculation.
-     * @return {Boolean}  true if the function was successful otherwise false
+     * @param {String} category         The name you supply for the group of objects you want to track.
+     * @param {String} action           A string that is uniquely paired with each category and commonly used to define the type of user interaction for the web object.
+     * @param {String} label            An optional string to provide additional dimensions to the event data.
+     * @param {Number} value            An integer that you can use to provide additional dimensions to the event data.
+     * @param {Boolean) noninteraction  A boolean that whe set to true, indicates that the event hit will not be used in bounce-rate calculation.
+     * @return {Boolean}                True if the function was successful otherwise false
      */
     trackEvent: function(category, action, label, value, noninteraction) {
         var me = this,
-            args = ['_trackEvent'];
-
-    	if (!category || !Ext.isString(category)) {
-    	    Ext.log.error('trackEvent: category arg not defined or not a string');
-    	    return false;
-    	}
-
-        args.push(category);
-
-    	if (!action || !Ext.isString(action)) {
-    	    Ext.log.error('trackEvent: action arg not defined or not a string');
-    	    return false;
-    	}
-
-        args.push(action);
-
-        if (label) {
-            args.push(label);
+            opt_label = label || '',
+            opt_value = value || '',
+            opt_noninteraction = noninteraction || {};
+        
+        if(!category || !Ext.isString(category)) {
+            Ext.log.error('trackEvent: category argument not defined or not a string');
+            return false;
         }
-
-        if (value) {
-            args.push(value);
+        
+        if(!action || !Ext.isString(action)) {
+            Ext.log.error('trackEvent: action argument not defined or not a string');
+            return false;
         }
-
-        if (noninteraction) {
-            args.push(noninteraction);
-        }
-
-        _gaq.push(args);
-
+        
+        ga('send', 'event', category, action, opt_label, opt_value, opt_noninteraction);
+        
         me.fireEvent('ga_track_event', category, action);
-
+        
+        return true;
+    },
+    
+    /**
+     * Issues a track pageview to the Google Analytics server.
+     *
+     * @param {String} pagepath   The URL string you want to track.
+     * @return {Boolean}          True if the function was successful otherwise false
+     */
+    trackPageView: function(pagepath) {
+        var me = this;
+        
+        if(!pagepath || !Ext.isString(pagepath)) {
+            Ext.log.error('trackPageView: pagepath argument not defined or not a string');
+            return false;
+        }
+        
+        ga('send', 'pageview', pagepath);
+        
+        me.fireEvent('ga_track_pageview', pagepath);
+        
         return true;
     }
 },
@@ -183,8 +174,8 @@ function() {
         enableGoogleAnalytics: true,
         onBeforeLaunch: function() {
             this.callOverridden();
-        
-            if (this.enableGoogleAnalytics) {
+            
+            if(this.enableGoogleAnalytics) {
                 Ext.ux.GoogleAnalytics.init(this);
             }
         }
