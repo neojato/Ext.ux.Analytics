@@ -25,7 +25,8 @@
  *              'Ext.ux': 'app/ux'
  *          },
  *          GoogleAnalytics: {
- *              trackingCode: 'your tracking code'
+ *              trackingCode: 'your tracking code', // 'UA-XXXX-Y'
+ *              forceSSL: true // (optional boolean) Send all data using SSL, even from insecure (HTTP) pages.
  *          }
  *      });
  */
@@ -91,6 +92,9 @@ Ext.define('Ext.ux.GoogleAnalytics', {
             })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
             
             ga('create', me.trackingCode, 'auto');
+            if(me.forceSSL) {
+            	ga('set', 'forceSSL', true); // Send all data using SSL, even from insecure (HTTP) pages.
+            }
             ga('send', 'pageview');
         });
     },
@@ -109,6 +113,7 @@ Ext.define('Ext.ux.GoogleAnalytics', {
         }
         
         me.trackingCode = config.trackingCode;
+        me.forceSSL = Ext.isBoolean(config.forceSSL) ? config.forceSSL : '';
         me.configured = true;
     },
     
