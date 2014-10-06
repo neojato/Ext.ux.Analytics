@@ -154,17 +154,31 @@ Ext.define('Ext.ux.GoogleAnalytics', {
      * Issues a track pageview to the Google Analytics server.
      *
      * @param {String} pagepath   The URL string you want to track.
+     * @param {String} pagetitle  The custom page title of the page you want to track.
      * @return {Boolean}          True if the function was successful otherwise false
      */
-    trackPageView: function(pagepath) {
-        var me = this;
+    trackPageView: function(pagepath, pagetitle) {
+        var me = this,
+        opt_pagetitle = Ext.isString(pagetitle) ? pagetitle : '';
         
         if(!pagepath || !Ext.isString(pagepath)) {
             Ext.log.error('trackPageView: pagepath argument not defined or not a string');
             return false;
         }
         
-        ga('send', 'pageview', pagepath);
+        // Ensure pagepath startswith a leading '/' character
+        if(!(/^\//).test(pagepath)) {
+            pagepath = '/'+pagepath;
+        }
+        
+        if(opt_pagetitle) {
+            ga('send', 'pageview', {
+                'page': pagepath,
+                'title': opt_pagetitle
+            });
+        } else {
+            ga('send', 'pageview', pagepath);
+        }
         
         me.fireEvent('ga_track_pageview', pagepath);
         
