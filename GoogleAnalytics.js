@@ -12,10 +12,14 @@
  * @extend Ext.app.Controller
  * Enables Google Analytics integration for Ext JS 4 MVC architecture.
  * 
- * Adapted from the Google Analytics library made by Alun Huw Jones and
- * updated for use with Google Universal Analytics and 
- * added ability to track virtual pageviews
+ * Adapted from the ExtJS Google Analytics library made by Alun Huw Jones
  * http://github.com/ahj/Ext.ux.Analytics
+ * 
+ * - updated for use with Google Universal Analytics
+ * - added ability to track virtual pageviews
+ * - enhanced ability to track events
+ * - added ability to enable 'forceSSL' mode
+ * - added ability to enable 'debugMode'
  * 
  * @example
  *      Ext.application({
