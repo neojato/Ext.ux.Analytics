@@ -27,6 +27,7 @@
  *          GoogleAnalytics: {
  *              trackingCode: 'your tracking code', // 'UA-XXXX-Y'
  *              forceSSL: true // (optional boolean) Send all data using SSL, even from insecure (HTTP) pages.
+ *              debugMode: true, // (optional boolean) Enable Analytics debugging mode (development use ONLY).
  *          }
  *      });
  */
@@ -89,7 +90,7 @@ Ext.define('Ext.ux.GoogleAnalytics', {
             (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
             m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            })(window,document,'script',me.debugMode ? '//www.google-analytics.com/analytics_debug.js' : '//www.google-analytics.com/analytics.js','ga');
             
             ga('create', me.trackingCode, 'auto');
             if(me.forceSSL) {
@@ -113,7 +114,8 @@ Ext.define('Ext.ux.GoogleAnalytics', {
         }
         
         me.trackingCode = config.trackingCode;
-        me.forceSSL = Ext.isBoolean(config.forceSSL) ? config.forceSSL : '';
+        me.forceSSL = Ext.isBoolean(config.forceSSL) && config.forceSSL ? true : '';
+        me.debugMode = Ext.isBoolean(config.debugMode) && config.debugMode ? true : '';
         me.configured = true;
     },
     
@@ -151,7 +153,11 @@ Ext.define('Ext.ux.GoogleAnalytics', {
                     ga('send', 'event', category, action, opt_label, opt_value);
                 }
             } else {
-                ga('send', 'event', category, action, opt_label);
+                if(opt_noninteraction) {
+                    ga('send', 'event', category, action, opt_label, opt_noninteraction);
+                } else {
+                    ga('send', 'event', category, action, opt_label);
+                }
             }
         } else {
             if(opt_noninteraction) {
