@@ -124,14 +124,14 @@ Ext.define('Ext.ux.GoogleAnalytics', {
      * @param {String} action           A string that is uniquely paired with each category and commonly used to define the type of user interaction for the web object.
      * @param {String} label            An optional string to provide additional dimensions to the event data.
      * @param {Number} value            An integer that you can use to provide additional dimensions to the event data.
-     * @param {Boolean) noninteraction  A boolean that whe set to true, indicates that the event hit will not be used in bounce-rate calculation.
+     * @param {Boolean) noninteraction  A boolean that we set to true, indicates that the event hit will not be used in bounce-rate calculation.
      * @return {Boolean}                True if the function was successful otherwise false
      */
     trackEvent: function(category, action, label, value, noninteraction) {
         var me = this,
-            opt_label = label || '',
-            opt_value = value || '',
-            opt_noninteraction = noninteraction || {};
+            opt_label = Ext.isString(label) ? label : '',
+            opt_value = Ext.isNumber(value) ? value : '',
+            opt_noninteraction = Ext.isBoolean(noninteraction) ? {'noninteraction': 1} : '';
         
         if(!category || !Ext.isString(category)) {
             Ext.log.error('trackEvent: category argument not defined or not a string');
@@ -143,7 +143,23 @@ Ext.define('Ext.ux.GoogleAnalytics', {
             return false;
         }
         
-        ga('send', 'event', category, action, opt_label, opt_value, opt_noninteraction);
+        if(opt_label) {
+            if(opt_value) {
+                if(opt_noninteraction) {
+                    ga('send', 'event', category, action, opt_label, opt_value, opt_noninteraction);
+                } else {
+                    ga('send', 'event', category, action, opt_label, opt_value);
+                }
+            } else {
+                ga('send', 'event', category, action, opt_label);
+            }
+        } else {
+            if(opt_noninteraction) {
+                ga('send', 'event', category, action, opt_noninteraction);
+            } else {
+                ga('send', 'event', category, action);
+            }
+        }
         
         me.fireEvent('ga_track_event', category, action);
         
